@@ -20,6 +20,12 @@ class WaterMarkCore:
         # init data
         self.img, self.img_YUV = None, None  # self.img 是原图，self.img_YUV 对像素做了加白偶数化
         self.ca, self.hvd, = [np.array([])] * 3, [np.array([])] * 3  # 每个通道 dct 的结果
+        '''
+        代码中先对每个通道执行离散小波变换(DWT),得到低频分量 self.ca 和高频分量 self.hvd,而这两个分量本质上是 DCT 变换的结果载体：
+            self.ca:每个通道的低频近似分量(包含图像的主要信息,水印主要嵌入于此)。
+            self.hvd:每个通道的高频细节分量(包含图像的边缘、纹理等细节信息）。
+        两者共同构成了该通道经过 DCT 变换后的完整频域数据。
+        '''
         self.ca_block = [np.array([])] * 3  # 每个 channel 存一个四维 array，代表四维分块后的结果
         self.ca_part = [np.array([])] * 3  # 四维分块后，有时因不整除而少一部分，self.ca_part 是少这一部分的 self.ca
 
@@ -28,13 +34,19 @@ class WaterMarkCore:
 
         self.fast_mode = False
         self.alpha = None  # 用于处理透明图
-
+    
     def init_block_index(self):
+        # 计算分块的个数
+        # ca_block_shape 是四维分块的形状，ca_block_shape[0] * ca_block_shape[1] 是分块的个数
         self.block_num = self.ca_block_shape[0] * self.ca_block_shape[1]
+        #检查水印大小是否超过分块个数
         assert self.wm_size < self.block_num, IndexError(
             '最多可嵌入{}kb信息，多于水印的{}kb信息，溢出'.format(self.block_num / 1000, self.wm_size / 1000))
         # self.part_shape 是取整后的ca二维大小,用于嵌入时忽略右边和下面对不齐的细条部分。
         self.part_shape = self.ca_block_shape[:2] * self.block_shape
+        # 生成分块的索引
+        # self.block_index 是一个列表，包含所有分块的索引位置
+        # 例如：block_index = [(0, 0), (0, 1), (0, 2), ..., (3, 3)]，表示四维分块的每个位置
         self.block_index = [(i, j) for i in range(self.ca_block_shape[0]) for j in range(self.ca_block_shape[1])]
 
     def read_img_arr(self, img):
@@ -51,6 +63,7 @@ class WaterMarkCore:
 
         # 如果不是偶数，那么补上白边，Y（明亮度）UV（颜色）
         self.img_YUV = cv2.copyMakeBorder(cv2.cvtColor(self.img, cv2.COLOR_BGR2YUV),
+                                          #补边操作，DWT要求输入尺寸为偶数
                                           0, self.img.shape[0] % 2, 0, self.img.shape[1] % 2,
                                           cv2.BORDER_CONSTANT, value=(0, 0, 0))
 
@@ -61,6 +74,9 @@ class WaterMarkCore:
         strides = 4 * np.array([self.ca_shape[1] * self.block_shape[0], self.block_shape[1], self.ca_shape[1], 1])
 
         for channel in range(3):
+            # 对每个通道做 DWT 变换，得到低频分量 self.ca 和高频分量 self.hvd
+            # 低频分量 self.ca 是 DCT 变换的结果载体，包含图像的主要信息，水印主要嵌入于此。
+            # 高频分量 self.hvd 包含图像的边缘、纹理等细节信息。
             self.ca[channel], self.hvd[channel] = dwt2(self.img_YUV[:, :, channel], 'haar')
             # 转为4维度
             self.ca_block[channel] = np.lib.stride_tricks.as_strided(self.ca[channel].astype(np.float32),
@@ -88,12 +104,15 @@ class WaterMarkCore:
         s[0] = (s[0] // self.d1 + 1 / 4 + 1 / 2 * wm_1) * self.d1
         if self.d2:
             s[1] = (s[1] // self.d2 + 1 / 4 + 1 / 2 * wm_1) * self.d2
-
+        #逆SVD
         block_dct_flatten = np.dot(u, np.dot(np.diag(s), v)).flatten()
+        #解密还原
         block_dct_flatten[shuffler] = block_dct_flatten.copy()
+        #逆dct
         return idct(block_dct_flatten.reshape(self.block_shape))
 
     def block_add_wm_fast(self, arg):
+        #无加密
         # dct->svd->打水印->逆svd->逆dct
         block, shuffler, i = arg
         wm_1 = self.wm_bit[i % self.wm_size]
@@ -182,6 +201,7 @@ class WaterMarkCore:
 
     def extract_avg(self, wm_block_bit):
         # 对循环嵌入+3个 channel 求平均
+        #降噪和聚合作用，提高水印准确性
         wm_avg = np.zeros(shape=self.wm_size)
         for i in range(self.wm_size):
             wm_avg[i] = wm_block_bit[:, i::self.wm_size].mean()
@@ -223,10 +243,12 @@ def random_strategy1(seed, size, block_shape):
         .random(size=(size, block_shape)) \
         .argsort(axis=1)
 
-
+'''
 def random_strategy2(seed, size, block_shape):
     one_line = np.random.RandomState(seed) \
         .random(size=(1, block_shape)) \
         .argsort(axis=1)
 
     return np.repeat(one_line, repeats=size, axis=0)
+'''
+

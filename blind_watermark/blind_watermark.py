@@ -8,13 +8,13 @@ import numpy as np
 import cv2
 
 from .bwm_core import WaterMarkCore
-from .version import bw_notes
+
 
 
 class WaterMark:
     def __init__(self, password_wm=1, password_img=1, block_shape=(4, 4), mode='common', processes=None):
-        bw_notes.print_notes()
-
+        
+        
         self.bwm_core = WaterMarkCore(password_img=password_img, mode=mode, processes=processes)
 
         self.password_wm = password_wm
@@ -56,10 +56,10 @@ class WaterMark:
     def embed(self, filename=None, compression_ratio=None):
         '''
         :param filename: string
-            Save the image file as filename
+            将图像文件保存为 filename
         :param compression_ratio: int or None
-            If compression_ratio = None, do not compression,
-            If compression_ratio is integer between 0 and 100, the smaller, the output file is smaller.
+            If compression_ratio = None, do not 压缩,
+            If compression_ratio is integer between 0 and 100, 数值越小，输出文件越小.
         :return:
         '''
         embed_img = self.bwm_core.embed()
