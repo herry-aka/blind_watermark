@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-# coding=utf-8
-# @Time    : 2020/8/13
-# @Author  : github.com/guofei9987
 import warnings
 
 import numpy as np

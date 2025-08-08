@@ -13,7 +13,6 @@ import cv2
 import numpy as np
 import os
 
-blind_watermark.bw_notes.close()
 
 os.chdir(os.path.dirname(__file__))
 ori_img = cv2.imread('pic/ori_img.jpeg', flags=cv2.IMREAD_UNCHANGED)

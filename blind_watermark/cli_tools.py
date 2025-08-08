@@ -1,7 +1,7 @@
 from optparse import OptionParser
 from .blind_watermark import WaterMark
 import blind_watermark
-blind_watermark.bw_notes.close()
+
 usage1 = 'blind_watermark --embed --pwd 1234 image.jpg "watermark text" embed.png'
 usage2 = 'blind_watermark --extract --pwd 1234 --wm_shape 111 embed.png'
 optParser = OptionParser(usage=usage1 + '\n' + usage2)
