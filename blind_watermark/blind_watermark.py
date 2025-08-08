@@ -30,7 +30,7 @@ class WaterMark:
 
         self.bwm_core.read_img_arr(img=img)
         return img
-
+#读取水印内容，支持三种模式
     def read_wm(self, wm_content, mode='img'):
         assert mode in ('img', 'str', 'bit'), "mode in ('img','str','bit')"
         if mode == 'img':
@@ -52,7 +52,7 @@ class WaterMark:
         np.random.RandomState(self.password_wm).shuffle(self.wm_bit)
 
         self.bwm_core.read_wm(self.wm_bit)
-
+#嵌入操作
     def embed(self, filename=None, compression_ratio=None):
         '''
         :param filename: string
@@ -79,7 +79,7 @@ class WaterMark:
         np.random.RandomState(self.password_wm).shuffle(wm_index)
         wm_avg[wm_index] = wm_avg.copy()
         return wm_avg
-
+#提取水印
     def extract(self, filename=None, embed_img=None, wm_shape=None, out_wm_name=None, mode='img'):
         assert wm_shape is not None, 'wm_shape needed'
 

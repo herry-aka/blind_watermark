@@ -41,10 +41,10 @@ assert np.all(wm == wm_extract), '提取水印和原水印不一致'
 
 loc = ((0.3, 0.1), (0.7, 0.9))
 
-att.cut_att(input_filename='output/embedded.png', output_file_name='output/截屏攻击.png', loc=loc)
+att.cut_att(input_filename='output/embedded.png', output_file_name='output/jiepingatt.png', loc=loc)
 
 bwm1 = WaterMark(password_wm=1, password_img=1)
-wm_extract = bwm1.extract('output/截屏攻击.png', wm_shape=len_wm, mode='bit')
+wm_extract = bwm1.extract('output/jiepingatt.png', wm_shape=len_wm, mode='bit')
 print("截屏攻击{loc}后的提取结果：".format(loc=loc), wm_extract)
 assert np.all(wm == wm_extract), '提取水印和原水印不一致'
 
@@ -57,53 +57,53 @@ scale = 0.7
 x1, y1, x2, y2 = int(w * loc_r[0][0]), int(h * loc_r[0][1]), int(w * loc_r[1][0]), int(h * loc_r[1][1])
 
 # 截屏攻击
-att.cut_att3(input_filename='output/embedded.png', output_file_name='output/截屏攻击1.png',
+att.cut_att3(input_filename='output/embedded.png', output_file_name='output/jiepingatt1.png',
              loc=(x1, y1, x2, y2), scale=scale)
 
-recover_crop(template_file='output/截屏攻击1.png', output_file_name='output/截屏攻击1_还原.png',
+recover_crop(template_file='output/jiepingatt1.png', output_file_name='output/jiepingatt1_ori.png',
              loc=(x1, y1, x2, y2), image_o_shape=ori_img_shape)
 
 bwm1 = WaterMark(password_wm=1, password_img=1)
-wm_extract = bwm1.extract('output/截屏攻击1_还原.png', wm_shape=len_wm, mode='bit')
+wm_extract = bwm1.extract('output/jiepingatt1_ori.png', wm_shape=len_wm, mode='bit')
 print("截屏攻击{loc}后的提取结果：".format(loc=loc), wm_extract)
 assert np.all(wm == wm_extract), '提取水印和原水印不一致'
 
 # %%椒盐攻击
 ratio = 0.05
-att.salt_pepper_att(input_filename='output/embedded.png', output_file_name='output/椒盐攻击.png', ratio=ratio)
+att.salt_pepper_att(input_filename='output/embedded.png', output_file_name='output/jiaoyanatt.png', ratio=ratio)
 # ratio是椒盐概率
 
 # 提取
-wm_extract = bwm1.extract('output/椒盐攻击.png', wm_shape=len_wm, mode='bit')
+wm_extract = bwm1.extract('output/jiaoyanatt.png', wm_shape=len_wm, mode='bit')
 print(f"椒盐攻击ratio={ratio}后的提取结果：", wm_extract)
 assert np.all(wm == wm_extract), '提取水印和原水印不一致'
 
 # %%旋转攻击
-att.rot_att(input_filename='output/embedded.png', output_file_name='output/旋转攻击.png', angle=45)
-att.rot_att(input_filename='output/旋转攻击.png', output_file_name='output/旋转攻击_还原.png', angle=-45)
+att.rot_att(input_filename='output/embedded.png', output_file_name='output/xuanzuanatt.png', angle=45)
+att.rot_att(input_filename='output/xuanzuanatt.png', output_file_name='output/xuanzuanatt_ori.png', angle=-45)
 
 # 提取水印
 bwm1 = WaterMark(password_wm=1, password_img=1)
-wm_extract = bwm1.extract('output/旋转攻击_还原.png', wm_shape=len_wm, mode='bit')
+wm_extract = bwm1.extract('output/xuanzuanatt_ori.png', wm_shape=len_wm, mode='bit')
 print("旋转攻击后的提取结果：", wm_extract)
 assert np.all(wm == wm_extract), '提取水印和原水印不一致'
 
 # %%遮挡攻击
 n = 60
-att.shelter_att(input_filename='output/embedded.png', output_file_name='output/多遮挡攻击.png', ratio=0.1, n=n)
+att.shelter_att(input_filename='output/embedded.png', output_file_name='output/zhedangatt.png', ratio=0.1, n=n)
 
 # 提取
 bwm1 = WaterMark(password_wm=1, password_img=1)
-wm_extract = bwm1.extract('output/多遮挡攻击.png', wm_shape=len_wm, mode='bit')
+wm_extract = bwm1.extract('output/zhedangatt.png', wm_shape=len_wm, mode='bit')
 print(f"遮挡攻击{n}后的提取结果：", wm_extract)
 assert np.all(wm == wm_extract), '提取水印和原水印不一致'
 
 # %%缩放攻击
-att.resize_att(input_filename='output/embedded.png', output_file_name='output/缩放攻击.png', out_shape=(800, 600))
-att.resize_att(input_filename='output/缩放攻击.png', output_file_name='output/缩放攻击_还原.png', out_shape=ori_img_shape[::-1])
+att.resize_att(input_filename='output/embedded.png', output_file_name='output/suofangatt.png', out_shape=(800, 600))
+att.resize_att(input_filename='output/suofangatt.png', output_file_name='output/suofangatt_ori.png', out_shape=ori_img_shape[::-1])
 # out_shape 是分辨率，需要颠倒一下
 
 bwm1 = WaterMark(password_wm=1, password_img=1)
-wm_extract = bwm1.extract('output/缩放攻击_还原.png', wm_shape=len_wm, mode='bit')
+wm_extract = bwm1.extract('output/suofangatt_ori.png', wm_shape=len_wm, mode='bit')
 print("缩放攻击后的提取结果：", wm_extract)
 assert np.all(wm == wm_extract), '提取水印和原水印不一致'
