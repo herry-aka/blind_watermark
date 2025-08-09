@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 from os import path as os_path
-import blind_watermark
 
 this_directory = os_path.abspath(os_path.dirname(__file__))
 
@@ -20,11 +19,10 @@ def read_requirements(filename):
 
 setup(name='blind_watermark',
       python_requires='>=3.5',
-      version=blind_watermark.__version__,
       description='Blind Watermark in Python',
       long_description=read_file('docs/en/README.md'),
       long_description_content_type="text/markdown",
-      url='https://github.com/guofei9987/blind_watermark',
+      url='https://github.com/herry-aka/blind_watermark',
       author='Guo Fei',
       author_email='guofei9987@foxmail.com',
       license='MIT',
