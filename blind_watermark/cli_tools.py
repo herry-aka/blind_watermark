@@ -82,9 +82,9 @@ def main():
                 filename=args[0],
                 wm_shape=wm_shape,
                 mode='img',
-                out_wm_name='examples/output/watermark/embedded1.png'  # 提取后保存的文件名
+                out_wm_name='examples/output/watermark/wm1.png'  # 提取后保存的文件名
             )
-            print(f'图片水印提取成功！保存为:embedded1.png')
+            print(f'图片水印提取成功！保存为:examples/output/watermark/wm1.png')
 
 
 '''
@@ -144,7 +144,7 @@ def main():
 
 
 
-
+使用前pip install -e
 
 blind_watermark --embed --pwd 1234 --mode img examples/pic/ori_img.jpeg examples/pic/watermark.png examples/output/embedded_img.png
 blind_watermark --extract --pwd 1234 --mode img --wm_shape 128,128 examples/output/embedded_img.png
