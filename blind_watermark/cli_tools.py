@@ -46,6 +46,9 @@ def main():
                 print('错误！图片水印用法：')
                 print(usage3)
                 return
+            #args[0] = 原图路径
+            #args[1] = 水印图路径
+            #args[2] = 输出路径 
             bwm1.read_img(args[0])
             bwm1.read_wm(args[1], mode='img')  # 读取图片水印
             bwm1.embed(args[2])
