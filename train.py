@@ -15,12 +15,13 @@ from config import params
 
 if(params['dataset'] == 'MNIST'):
     from models.mnist_model import Generator, Discriminator, DHead, QHead
-elif(params['dataset'] == 'SVHN'):
-    from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
     from models.celeba_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'FashionMNIST'):
     from models.mnist_model import Generator, Discriminator, DHead, QHead
+elif(params['dataset'] == 'CIFAR10'):
+    from models.cifar10_model import Generator, Discriminator, DHead, QHead
+
 
 # Set random seed for reproducibility.
 seed = 1123
@@ -44,21 +45,16 @@ if(params['dataset'] == 'MNIST'):
     params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
     params['num_con_c'] = 2
-elif(params['dataset'] == 'SVHN'):
-    params['num_z'] = 124
-    params['num_dis_c'] = 4
+elif(params['dataset'] == 'CIFAR10'):
+    params['num_z'] = 128
+    params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
-    params['num_con_c'] = 4
+    params['num_con_c'] = 2
 elif(params['dataset'] == 'CelebA'):
     params['num_z'] = 128
     params['num_dis_c'] = 10
     params['dis_c_dim'] = 10
     params['num_con_c'] = 0
-elif(params['dataset'] == 'FashionMNIST'):
-    params['num_z'] = 62
-    params['num_dis_c'] = 1
-    params['dis_c_dim'] = 10
-    params['num_con_c'] = 2
 
 # 绘制训练图像样本
 sample_batch = next(iter(dataloader))
@@ -231,16 +227,22 @@ for epoch in range(params['num_epochs']):
         plt.close('all')
 
     # 定期保存模型 checkpoint
-    if (epoch+1) % params['save_epoch'] == 0:
+    import os
+    if (epoch + 1) % params['save_epoch'] == 0:
+        save_dir = os.path.join("checkpoint", params['dataset'])
+        os.makedirs(save_dir, exist_ok=True)  # 自动创建目录
+
+        save_path = os.path.join(save_dir, f"model_epoch_{epoch+1}_{params['dataset']}.pth")
         torch.save({
-            'netG' : netG.state_dict(),
-            'discriminator' : discriminator.state_dict(),
-            'netD' : netD.state_dict(),
-            'netQ' : netQ.state_dict(),
-            'optimD' : optimD.state_dict(),
-            'optimG' : optimG.state_dict(),
-            'params' : params
-            }, 'checkpoint/model_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
+            'netG': netG.state_dict(),
+            'discriminator': discriminator.state_dict(),
+            'netD': netD.state_dict(),
+            'netQ': netQ.state_dict(),
+            'optimD': optimD.state_dict(),
+            'optimG': optimG.state_dict(),
+            'params': params
+        }, save_path)
+
 # 计算总训练时间
 training_time = time.time() - start_time
 print("-"*50)

@@ -50,15 +50,26 @@ class Discriminator(nn.Module):
 		return x
 
 class DHead(nn.Module):
-	def __init__(self):
-		super().__init__()
+    """
+    通用判别器头 (discriminator head)：
+    - 自适应地把 feature map 池化到 1x1（适配任意输入分辨率）
+    - 用 1x1 卷积映射到单通道，再 sigmoid
+    - 返回 shape: (batch,) 的概率张量，可直接与 label (batch,) 做 BCE
+    """
+    def __init__(self, in_channels=256):
+        super().__init__()
+        # in_channels: 判别器最后一层输出的通道数（多数模型为 256）
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))  # 任意 HxW -> 1x1
+        self.conv1x1 = nn.Conv2d(in_channels, 1, kernel_size=1, bias=True)
+        # optional: 一个小的线性替代也可以，但 Conv2d 保持在卷积风格的一致性
 
-		self.conv = nn.Conv2d(256, 1, 4)
-
-	def forward(self, x):
-		output = torch.sigmoid(self.conv(x))
-
-		return output
+    def forward(self, x):
+        # x: (B, C, H, W)
+        x = self.pool(x)            # (B, C, 1, 1)
+        x = self.conv1x1(x)         # (B, 1, 1, 1)
+        x = torch.sigmoid(x)        # (B, 1, 1, 1)
+        x = x.view(x.size(0))       # (B,)
+        return x
 
 class QHead(nn.Module):
 	def __init__(self):
