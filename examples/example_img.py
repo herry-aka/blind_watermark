@@ -12,7 +12,7 @@ bwm.read_img(filename='pic/ori_img.jpeg')
 # 读取水印
 bwm.read_wm('pic/watermark.png')
 # 打上盲水印
-bwm.embed('output/embedded.png')
+bwm.embed('output/watermark/embedded.png')
 wm_shape = cv2.imread('pic/watermark.png', flags=cv2.IMREAD_GRAYSCALE).shape
 
 # %% 解水印
