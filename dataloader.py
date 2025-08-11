@@ -47,7 +47,7 @@ def get_data(dataset, batch_size):
             transforms.Normalize((0.5, 0.5, 0.5),
                 (0.5, 0.5, 0.5))])
 
-        dataset = dsets.ImageFolder(root=root+'celeba/CelebA/Img', transform=transform)
+        dataset = dsets.ImageFolder('E:/Python Files/bwm/CelebA/Img', transform=transform)
     
     elif dataset == 'CIFAR10':
         transform = transforms.Compose([
