@@ -46,7 +46,7 @@ if(params['dataset'] == 'MNIST'):
     params['dis_c_dim'] = 10
     params['num_con_c'] = 2
 elif(params['dataset'] == 'CIFAR10'):
-    params['num_z'] = 128
+    params['num_z'] = 64            # 试试 64 比 128 更容易收敛
     params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
     params['num_con_c'] = 2
@@ -94,9 +94,9 @@ criterionQ_con = NormalNLLLoss()
 
 # 定义优化器（Adam优化器）
 # 鉴别器相关参数（discriminator和netD）
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}], lr=params['d_learning_rate'], betas=(params['beta1'], params['beta2']))
 # 生成器相关参数（netG和netQ）
-optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['g_learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # 固定噪声（用于监控生成器训练过程）
 z = torch.randn(100, params['num_z'], 1, 1, device=device)
@@ -115,8 +115,8 @@ if(params['num_con_c'] != 0):
     con_c = torch.rand(100, params['num_con_c'], 1, 1, device=device) * 2 - 1
     fixed_noise = torch.cat((fixed_noise, con_c), dim=1)
 # 定义标签（真/假）
-real_label = 1
-fake_label = 0
+real_label = 0.9
+fake_label = 0.1
 
 # 存储训练结果的列表
 img_list = []
@@ -144,58 +144,57 @@ for epoch in range(params['num_epochs']):
         # 将数据转移到设备
         real_data = data.to(device)
 
-        # 更新鉴别器和DHead
+        # 更新鉴别器和DHead（保持1次更新）
         optimD.zero_grad()
         # 真实数据处理
         label = torch.full((b_size, ), real_label, device=device, dtype=torch.float32)
         output1 = discriminator(real_data)
         probs_real = netD(output1).view(-1)
         loss_real = criterionD(probs_real, label)
-        # Calculate gradients.
         loss_real.backward()
 
-        # 虚假数据处理
+        # 虚假数据处理（用于判别器训练）
         label.fill_(fake_label)
         noise, idx = noise_sample(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device)
         fake_data = netG(noise)
         output2 = discriminator(fake_data.detach())
         probs_fake = netD(output2).view(-1)
         loss_fake = criterionD(probs_fake, label)
-        # 反向传播计算梯度
         loss_fake.backward()
 
-        # 鉴别器总损失
+        # 鉴别器总损失与更新
         D_loss = loss_real + loss_fake
-        # 更新鉴别器参数
         optimD.step()
 
-        # 更新生成器和QHead
-        optimG.zero_grad()
-
-        # 将虚假数据视为真实数据来训练生成器
-        output = discriminator(fake_data)
-        label.fill_(real_label)
-        probs_fake = netD(output).view(-1)
-        gen_loss = criterionD(probs_fake, label)
-        # Q网络输出
-        q_logits, q_mu, q_var = netQ(output)
-        target = torch.LongTensor(idx).to(device)
-        # 计算离散潜在变量损失
-        dis_loss = 0
-        for j in range(params['num_dis_c']):
-            dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
-
-        # 计算连续潜在变量损失
-        con_loss = 0
-        if (params['num_con_c'] != 0):
-            con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
-
-        # Net loss for generator.
-        G_loss = gen_loss + dis_loss + con_loss
-        # Calculate gradients.
-        G_loss.backward()
-        # Update parameters.
-        optimG.step()
+        # 更新生成器和QHead（每个batch更新2次）
+        for _ in range(2):  # 增加生成器更新次数（可调整为2/3次）
+            optimG.zero_grad()
+            
+            # 每次更新生成器时重新生成噪声和虚假数据（使用当前生成器参数）
+            noise, idx = noise_sample(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device)
+            fake_data = netG(noise)
+            
+            # 将虚假数据视为真实数据来训练生成器
+            output = discriminator(fake_data)
+            label.fill_(real_label)
+            probs_fake = netD(output).view(-1)
+            gen_loss = criterionD(probs_fake, label)
+            
+            # Q网络输出与损失计算
+            q_logits, q_mu, q_var = netQ(output)
+            target = torch.LongTensor(idx).to(device)
+            dis_loss = 0
+            for j in range(params['num_dis_c']):
+                dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
+            
+            con_loss = 0
+            if (params['num_con_c'] != 0):
+                con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
+            
+            # 生成器总损失与更新
+            G_loss = gen_loss + dis_loss + con_loss
+            G_loss.backward()
+            optimG.step()
 
         # 每100次迭代打印一次训练进度
         if i != 0 and i%100 == 0:
